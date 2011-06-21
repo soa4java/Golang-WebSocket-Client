@@ -1,0 +1,9 @@
+This is a tool written in Google go to test WebSocket servers.
+
+
+How to use:
+1. Configure your SebSocket server with ip address 30.0.1.1, and run it on port 8080
+2. Configure your machine which runs this program with ip address 30.0.1.2 ~ 30.0.1.50, by
+    'for((x=2; x<50; x++)); do ip addr add 30.0.1.$x/24 dev eth0 ; done'
+3. Compile your client by typing 'make' (you need to have go installed)
+4. Type './conn -h' for usage, it's pretty straitforward.
