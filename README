@@ -7,3 +7,5 @@ How to use:
     'for((x=2; x<50; x++)); do ip addr add 30.0.1.$x/24 dev eth0 ; done'
 3. Compile your client by typing 'make' (you need to have go installed)
 4. Type './conn -h' for usage, it's pretty straitforward.
+
+Of course you have to patch your go with go.patch.
