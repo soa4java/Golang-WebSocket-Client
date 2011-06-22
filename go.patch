@@ -1,0 +1,70 @@
+diff -r 26a2b651a7a9 src/pkg/websocket/client.go
+--- a/src/pkg/websocket/client.go       Tue May 24 16:05:26 2011 +1000
++++ b/src/pkg/websocket/client.go       Wed Jun 22 04:54:24 2011 -0700
+@@ -40,10 +40,23 @@
+        Error    os.Error
+ }
+ 
++type DialBindError struct {
++       URL      string
++       Protocol string
++       Origin   string
++       LocalIP  string
++       LocalPort int
++       Error    os.Error
++}
++
+ func (e *DialError) String() string {
+        return "websocket.Dial " + e.URL + ": " + e.Error.String()
+ }
+ 
++func (e *DialBindError) String() string {
++       return "websocket.Dial " + e.URL + ": " + e.Error.String() +"\nip: "+ e.LocalIP +" port:"+ fmt.Sprintf("%d",e.LocalPort)
++}
++
+ func init() {
+        i := 0
+        for ch := byte(0x21); ch < 0x30; ch++ {
+@@ -98,6 +111,43 @@
+                // use msg[0:n]
+        }
+ */
++func DialBind(url, protocol, origin, local_ip string, local_port int) (ws *Conn, err os.Error) {
++       var client net.Conn
++
++       parsedUrl, err := http.ParseURL(url)
++       if err != nil {
++               goto Error
++       }
++        var ra *net.TCPAddr
++       if ra, err = net.ResolveTCPAddr("tcp", parsedUrl.Host); err != nil {
++               goto Error
++       }
++       la := &net.TCPAddr{net.ParseIP(local_ip), local_port}
++
++
++       switch parsedUrl.Scheme {
++       case "ws":
++               client, err = net.DialTCP("tcp", la, ra)
++
++       case "wss":
++               client, err = tls.Dial("tcp", parsedUrl.Host, nil)
++
++       default:
++               err = ErrBadScheme
++       }
++       if err != nil {
++               goto Error
++       }
++
++       ws, err = newClient(parsedUrl.RawPath, parsedUrl.Host, origin, url, protocol, client, handshake)
++       if err != nil {
++               goto Error
++       }
++       return
++
++Error:
++       return nil, &DialBindError{url, protocol, origin, local_ip, local_port, err}
++}
+ func Dial(url, protocol, origin string) (ws *Conn, err os.Error) {
+        var client net.Conn
